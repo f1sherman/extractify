@@ -22,6 +22,8 @@ module Extractify
         container_nodes = {}
 
         element_selectors.each_pair do |label, selector|
+          selector = ".#{selector}" if selector[0] == '/'
+
           node = container.search(selector).first
           container_nodes[label] = node.to_s if node
         end

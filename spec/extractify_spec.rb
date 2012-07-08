@@ -14,31 +14,47 @@ describe Extractify do
     it 'should not find results outside of the container' do
       Extractify.extract('<html><div class=bif>baz</div><div class=baz>foo</div></html>', 'doesnotexist' => { :bif => '.bif/text()', :baz => '.baz/text()' }).should == []
     end
+    it 'should search only within the container' do
+      doc = '<parents>
+              <parent>
+                <child>child1</child>
+              </parent>
+              <parent>
+                <child>child2</child>
+              </parent>
+            </parents>'
+      Extractify.extract(doc, 'parent' => { :child => '//child/text()' }).should == [{:child => 'child1'}, {:child => 'child2'}]
+
+    end
+    
     it 'should group results in same order as instructions' do
-      @doc = '<html>'\
-                '<div class=container>'\
-                  '<div class=key1>'\
-                    'val1'\
-                  '</div>'\
-                  '<div class=key2>'\
-                    'val2'\
-                  '</div>'\
-                '</div>'\
-                '<div class=container>'\
-                  '<div class=key2>'\
-                    'val3'\
-                  '</div>'\
-                '</div>'\
-                '<div class=container>'\
-                  '<div class=key1>'\
-                    'val4'\
-                  '</div>'\
-                '</div>'\
-             '</html>'
-        Extractify.extract(@doc, '.container' => { :key1 => '.key1/text()', :key2 => '.key2/text()' }).should == [
-                                                                                              {:key1 => 'val1', :key2 => 'val2'},
-                                                                                              {:key2 => 'val3'},
-                                                                                              {:key1 => 'val4'}
+      doc = '<?xml version="1.0"?>
+              <movies>
+                <movie>
+                  <title>Very Scary Movie</title>
+                  <released>1999</released>
+                  <length>117</length>
+                  <director>Jane Doe</director>
+                  <genre>Horror</genre>
+                </movie>
+                <movie>
+                  <title>Funny Movie</title>
+                  <released>2005</released>
+                  <director>John Doe</director>
+                  <genre>Comedy</genre>
+                </movie>
+                <movie>
+                  <released>2009</released>
+                  <length>105</length>
+                  <director>Jim Doe</director>
+                  <genre>Science Fiction</genre>
+                </movie>
+              </movies>'
+
+        Extractify.extract(doc, '//movie' => { :name => '//title/text()', :runtime => '//length/text()' }).should == [
+                                                                                              {:name => 'Very Scary Movie', :runtime => '117'},
+                                                                                              {:name => 'Funny Movie'},
+                                                                                              {:runtime => '105'},
                                                                                              ]
     end
     it 'should should allow Nokogiri documents to be passed in' do
